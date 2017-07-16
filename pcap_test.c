@@ -7,7 +7,7 @@ typedef struct ether_info
 	{
 		u_char Mac_dst[6];
 		u_char Mac_src[6];
-		u_char ether_type[2];
+		short ether_type;
 	}ether_info;
 
 int main(int argc, char *argv[])
@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 	bpf_u_int32 net;		/* Our IP */
 	struct pcap_pkthdr *header;	/* The header that pcap gives us */
 	const u_char *packet;		/* The actual packet */
-	
+	int i;				/* ether->ip->tcp->http flag */
 	
 	/* Define the device */
 	dev = pcap_lookupdev(errbuf);
@@ -54,7 +54,6 @@ int main(int argc, char *argv[])
 		return(2);
 	}
 	/* Grab a packet */ //1000=1
-	int i=0;
 //	while(1) {
 		pcap_next_ex(handle, &header ,&packet) ; //data in packet
 		
@@ -79,8 +78,7 @@ int Mac_ad(const u_char *packet)
 	else if(i==6) printf("\nSource Mac_Adress : %02X ",ether->Mac_src[i]);
 	else printf(": %02x ",packet[i]);
 	}
-	
-
+	printf("%03x %3x\n",ether->ether_type,ether->ether_type);
 	return i;
 
 }
