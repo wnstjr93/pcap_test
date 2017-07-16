@@ -2,6 +2,8 @@
 #include <stdio.h>
 
 int Mac_ad(const u_char *packet);
+int Ip_ad(const u_char *packet,int i);
+
 
 typedef struct ether_info
 	{
@@ -9,6 +11,17 @@ typedef struct ether_info
 		u_char Mac_src[6];
 		short ether_type;
 	}ether_info;
+
+typedef struct ip_info
+	{
+		u_char Ip_version:4;
+		u_char Head_len:4;
+		short Ip_len;
+		u_char Ip_dst[4];
+		u_char Ip_src[4];
+	}ip_info;
+
+
 
 int main(int argc, char *argv[])
 {
@@ -60,29 +73,57 @@ int main(int argc, char *argv[])
 		
 		
 		for(i=0;i<header->len;i++){
-		printf("[%02x]",packet[i]);}
+		if(i%8==0||i==header->len)printf("\n");
+		printf("%02x ",packet[i]);}
 		i=Mac_ad(packet);
+		Ip_ad(packet,i);
 		/* And close the session */
 //	}
 	pcap_close(handle);
 	return(0);
 }
+/*Mac_address - ethernet part*/
 int Mac_ad(const u_char *packet)
 {
 	int i;
 	ether_info *ether;
 	ether=(ether_info *)packet;
+	short M_ether_type;
+	printf("\n******ether packet******\n");
 	for(i = 0; i < 12; i++)
 	{
-	if(i==0)printf("Destination Mac_Adress: %02x ",ether->Mac_dst[i]);	
-	else if(i==6) printf("\nSource Mac_Adress : %02X ",ether->Mac_src[i]);
+	if(i==0)printf("Dst Mac_Adress : %02x ",ether->Mac_dst[i]);	
+	else if(i==6) printf("\nSrc Mac_Adress : %02X ",ether->Mac_src[i]);
 	else printf(": %02x ",packet[i]);
 	}
-	printf("%03x %3x\n",ether->ether_type,ether->ether_type);
+	M_ether_type=ntohs(ether->ether_type);//big->little endian
+	printf("\nnext protocol :%03x\n",M_ether_type);
+	printf("******ether packet******\n");
+	return i+10;
+
+}
+/*IP_address - Ip part*/
+int Ip_ad(const u_char *packet,int i)
+{
+	int k=i+8;
+	ip_info *ip;
+	ip=(ip_info *)packet;
+	printf("\n*********ip packet******\n");
+	for(i;i<k;i++)
+	{
+	if(i==(k-8))printf("Dst Ip_Address : %3d",ip->Ip_dst[i]);
+	else if(i==(k-4)) printf("\nSrc Ip_Address : %3d ",ip->Ip_src[i]);
+	else printf(".%3d ",packet[i]);
+	}
+	i=k-8;
+	for(i;i<k;i++)
+	{
+	printf("%02x ",ip->Ip_dst[i]);
+	}
+	printf("\n*********ip packet******\n");
 	return i;
 
 }
-
 /*(if[12]==0x08)&&(p[13]==0x00)*/
 
 
