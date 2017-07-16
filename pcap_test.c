@@ -1,7 +1,14 @@
 #include <pcap.h>
 #include <stdio.h>
 
-void Mac_ad(const u_char *packet);
+int Mac_ad(const u_char *packet);
+
+typedef struct ether_info
+	{
+		u_char Mac_dst[6];
+		u_char Mac_src[6];
+		u_char ether_type[2];
+	}ether_info;
 
 int main(int argc, char *argv[])
 {
@@ -13,9 +20,9 @@ int main(int argc, char *argv[])
 	bpf_u_int32 mask;		/* Our netmask */
 	bpf_u_int32 net;		/* Our IP */
 	struct pcap_pkthdr *header;	/* The header that pcap gives us */
-	//(caplen) , (ts)
 	const u_char *packet;		/* The actual packet */
-
+	
+	
 	/* Define the device */
 	dev = pcap_lookupdev(errbuf);
 	if (dev == NULL) {
@@ -47,34 +54,37 @@ int main(int argc, char *argv[])
 		return(2);
 	}
 	/* Grab a packet */ //1000=1
-	// - header
-	//packet
-	//
-	//pcap_next_ex(handle, &header, &packet);
 	int i=0;
 //	while(1) {
 		pcap_next_ex(handle, &header ,&packet) ; //data in packet
-		/* Print its length */
+		
+		
+		
 		for(i=0;i<header->len;i++){
 		printf("[%02x]",packet[i]);}
-		for(i=0;i<12;i++){
-			printf("%02x ",packet[i]);}
-		Mac_ad(packet);
-		//printf("Jacked a packet with length of [%x]\n", header->len);
+		i=Mac_ad(packet);
 		/* And close the session */
 //	}
 	pcap_close(handle);
 	return(0);
 }
-void Mac_ad(const u_char *packet)
+int Mac_ad(const u_char *packet)
 {
-	for(int i = 0; i < 12; i++)
+	int i;
+	ether_info *ether;
+	ether=(ether_info *)packet;
+	for(i = 0; i < 12; i++)
 	{
-	if(i==0)printf("Destination Mac_Adress: %02x ",packet[i]);	
-	else if(i==6) printf("\nSource Mac_Adress : %02X ",packet[i]);
-	else printf(":%02x ",packet[i]);
+	if(i==0)printf("Destination Mac_Adress: %02x ",ether->Mac_dst[i]);	
+	else if(i==6) printf("\nSource Mac_Adress : %02X ",ether->Mac_src[i]);
+	else printf(": %02x ",packet[i]);
 	}
+	
+
+	return i;
+
 }
+
 /*(if[12]==0x08)&&(p[13]==0x00)*/
 
 
