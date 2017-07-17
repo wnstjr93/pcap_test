@@ -3,6 +3,10 @@
 #include <netinet/in.h> //ipproto_tcp
 #include <netinet/if_ether.h> //ethernet_type...
 #include <stdlib.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #define HTTP_TEMP 1000
 #define ETHER_SIZE 14
 
@@ -30,8 +34,8 @@ typedef struct ip_info
 	u_char ttl;
 	u_char ip_protocol;
 	u_char Header_Checksum[2];
-	u_char Ip_src[4];
-	u_char Ip_dst[4];
+	uint32_t Ip_src;
+	uint32_t Ip_dst;
 }ip_info;
 
 
@@ -147,19 +151,28 @@ int Ip_ad(const u_char *packet)
 	u_char Header_len;
 	u_char M_Ip_protocol;
 	M_Ip_protocol=(ip->ip_protocol);
+	char *ip_addr;
+	struct in_addr ipip;
+	ipip = ip->Ip_src;
+	ip_addr = inet_ntoa(ipip);
+	printf("%s\n",ip_addr);
 
 	printf("*********ip packet*********\n");
-	for(int i=0;i<8;i++)
+	//for(int i=0;i<8;i++)
 	{
-		if(i==0)printf("Src Ip_Address : %3d",ip->Ip_src[i]);//
-		else if(i==4)printf("\nDst Ip_Address : %3d",ip->Ip_dst[i-4]);///
+		/*
+		if(i==0)printf("Src Ip_Address : %3d",inet_nota(ip->Ip_src));//
+		else if(i==4)printf("\nDst Ip_Address : %3d",inet_nota(ip->Ip_dst));///
 		else if(i>0&&i<4)printf(". %d",ip->Ip_src[i]);
 		else printf(". %3d",ip->Ip_dst[i-4]);
+		*/
+	//	printf("Src Ip_Address : %s",inet_ntoa(ip->Ip_src));//
+	//	printf("\nDst Ip_Address : %s",inet_ntoa(ip->Ip_dst));///
+		
 	}
 	Header_len=5*(ip->Head_len);
 	printf("\n***************************\n");
 	if(M_Ip_protocol!=IPPROTO_TCP){ 
-		printf("M_ip:%04x , ippro:'IPPROTO_TCP\n",M_Ip_protocol);
 		printf("Is this not TCP??\n");
 		exit(0);}
 	else return Header_len;
