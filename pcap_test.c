@@ -1,9 +1,12 @@
 #include <pcap.h>
 #include <stdio.h>
 
+#define HTTP_SIZE 180
+
 int Mac_ad(const u_char *packet);
 int Ip_ad(const u_char *packet);
 int Port_ad(const u_char *packet,int i);
+void Http_put(const u_char *packet,int i);
 
 typedef struct ether_info
 {
@@ -32,6 +35,10 @@ typedef struct Port_info
 	u_char unused[16];
 }Port_info;
 
+typedef struct Http_info
+{
+	u_char Http_text[HTTP_SIZE];
+}Http_info;
 
 int main(int argc, char *argv[])
 {
@@ -77,23 +84,25 @@ int main(int argc, char *argv[])
 		return(2);
 	}
 	/* Grab a packet */ //1000=1
-	//while(1) {
+	while(1) {
 		pcap_next_ex(handle, &header ,&packet) ; //data in packet
+		printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n*****Packet binary*****");
 		for(i=0;i<header->len;i++){
 			if(i%8==0||i==header->len)printf("\n");
 			printf("%02x ",packet[i]);
 		}
 		
-		
+		/*MAIN FUNCTION*/
 		Mac_ad(packet);
 		i=Ip_ad(packet);
-		Port_ad(packet,i);
-		/* And close the session */
-//	}
+		i=Port_ad(packet,i);
+		Http_put(packet,i);
+
+	}
 	pcap_close(handle);
 	return(0);
 }
-/*Mac_address - ethernet part*/
+/*Mac_ADDRESS - ETHERNET PART*/
 int Mac_ad(const u_char *packet)
 {
 	int i;
@@ -113,13 +122,13 @@ int Mac_ad(const u_char *packet)
 	return 0;//i=i+12;// wait..
 
 }
-/*IP_address - Ip part*/
+/*IP ADDRESS - IP PART*/
 int Ip_ad(const u_char *packet)
 {
 	ip_info *ip;
 	ip=(ip_info *)(packet+14);//structure point
 	u_char Header_len;
-	printf("\n*********ip packet*********\n");
+	printf("*********ip packet*********\n");
 	
 	for(int i=0;i<8;i++)
 	{
@@ -129,21 +138,31 @@ int Ip_ad(const u_char *packet)
 		else printf(". %3d",ip->Ip_dst[i-4]);
 	}
 	Header_len=5*(ip->Head_len);
-	printf("\n************************\n");
+	printf("\n***************************\n");
 
 	return Header_len;
 
 }
+/*TCP_PORT NUMBER - TCP PART*/
 int Port_ad(const u_char *packet, int i)
 {
+	int next_num=i+14;
 	Port_info *Port;
-	Port=(Port_info *)(packet+i+14);
-	printf("\n*********Port  address******\n");
+	Port=(Port_info *)(packet+next_num);
+	printf("*********Port  address******\n");
 	unsigned short Ps=ntohs(Port->Port_src);
 	unsigned short Pd=ntohs(Port->Port_dst);
 	
-		printf("Src Port : %d\n",Ps);
-		printf("Dst Port : %d\n",Pd);
-	printf("****************************\n");
-	return 0;
+	printf("Src Port : %d\n",Ps);
+	printf("Dst Port : %d\n",Pd);
+	printf("********HTTP_TEXT************\n");
+	return next_num+20;
+}
+/*HTTP_CONTENT - HTTP PART*/
+void Http_put(const u_char *packet,int i)
+{
+	Http_info *Http;
+	Http=(Http_info *)(packet+i);
+	for(i=0;i<HTTP_SIZE;i++)putchar(Http->Http_text[i]);
+	printf("\n********HTTP_END**********\n");
 }
