@@ -34,8 +34,8 @@ typedef struct ip_info
 	u_char ttl;
 	u_char ip_protocol;
 	u_char Header_Checksum[2];
-	uint32_t Ip_src;
-	uint32_t Ip_dst;
+	struct in_addr Ip_src;
+	struct in_addr Ip_dst;
 }ip_info;
 
 
@@ -134,7 +134,7 @@ int Mac_ad(const u_char *packet)
 				else if(i==6) printf("\nSrc Mac_Adress : %02X ",ether->Mac_src[i]);
 				else printf(": %02x ",packet[i]);
 			}
-			printf("\nnext protocol :%03x\n",M_ether_type);
+			//printf("\nnext protocol :%03x\n",M_ether_type);
 			printf("************************\n");
 		
 			if(M_ether_type!=ETHERTYPE_IP){
@@ -151,25 +151,18 @@ int Ip_ad(const u_char *packet)
 	u_char Header_len;
 	u_char M_Ip_protocol;
 	M_Ip_protocol=(ip->ip_protocol);
-	char *ip_addr;
-	struct in_addr ipip;
-	ipip = ip->Ip_src;
-	ip_addr = inet_ntoa(ipip);
-	printf("%s\n",ip_addr);
+	char buf[20];
+
 
 	printf("*********ip packet*********\n");
-	//for(int i=0;i<8;i++)
-	{
-		/*
-		if(i==0)printf("Src Ip_Address : %3d",inet_nota(ip->Ip_src));//
-		else if(i==4)printf("\nDst Ip_Address : %3d",inet_nota(ip->Ip_dst));///
-		else if(i>0&&i<4)printf(". %d",ip->Ip_src[i]);
-		else printf(". %3d",ip->Ip_dst[i-4]);
-		*/
+	inet_ntop(AF_INET,&(ip->Ip_src),buf,sizeof(buf));
+	printf("Src Ip_Address : %s",buf);
+	inet_ntop(AF_INET,&(ip->Ip_dst),buf,sizeof(buf));
+	printf("\nDst Ip_Address : %s",buf);///
 	//	printf("Src Ip_Address : %s",inet_ntoa(ip->Ip_src));//
 	//	printf("\nDst Ip_Address : %s",inet_ntoa(ip->Ip_dst));///
 		
-	}
+	//}
 	Header_len=5*(ip->Head_len);
 	printf("\n***************************\n");
 	if(M_Ip_protocol!=IPPROTO_TCP){ 
