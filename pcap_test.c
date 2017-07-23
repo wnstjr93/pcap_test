@@ -5,9 +5,10 @@
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
+#include <arpa/inet.h>//inet..
+#include <ctype.h> //fixed for broken string
 
-#define HTTP_TEMP 1000
+#define HTTP_TEMP 1500
 #define ETHER_SIZE 14
 
 
@@ -102,7 +103,7 @@ int main(int argc, char *argv[])
 	/* Grab a packet */ //1000=1
 	while(1) {
 		pcap_next_ex(handle, &header ,&packet) ; //data in packet
-		printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n*****Packet binary*****");
+		printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n*****Packet binary*****");
 		for(int i=0;i<header->len;i++){
 			if(i%8==0||i==header->len)printf("\n");
 			printf("%02x ",packet[i]);
@@ -135,7 +136,7 @@ int Mac_ad(const u_char *packet)
 				else printf(": %02x ",packet[i]);
 			}
 			//printf("\nnext protocol :%03x\n",M_ether_type);
-			printf("************************\n");
+			printf("\n************************\n");
 		
 			if(M_ether_type!=ETHERTYPE_IP){
 				printf("Is this not IP PROTOCOL?\n");
@@ -163,7 +164,8 @@ int Ip_ad(const u_char *packet)
 	//	printf("\nDst Ip_Address : %s",inet_ntoa(ip->Ip_dst));///
 		
 	//}
-	Header_len=5*(ip->Head_len);
+	Header_len=4*(ip->Head_len);
+	printf("ip_len:%d\n",Header_len);
 	printf("\n***************************\n");
 	if(M_Ip_protocol!=IPPROTO_TCP){ 
 		printf("Is this not TCP??\n");
@@ -178,6 +180,7 @@ int Port_ad(const u_char *packet, int ip_l)
 	Port_info *Port;
 	Port=(Port_info *)(packet+ip_l+ETHER_SIZE);
 	TCP_len=4*(Port->tcp_hlen);
+	printf("tcp len: %d\n", TCP_len);
 	printf("*********Port  address******\n");
 	uint16_t Ps=ntohs(Port->Port_src);
 	uint16_t Pd=ntohs(Port->Port_dst);
@@ -197,12 +200,18 @@ void Http_put(const u_char *packet,int ip_l,int po_l)
     Http=(Http_info *)(packet+ETHER_SIZE+ip_l+po_l);	
 	ip_info *Ip;
 	Ip=(ip_info *)(packet+ETHER_SIZE);
-	Ip_total=Ip->Total_len;
+	Ip_total=ntohs(Ip->Total_len); //if val have 2byte~~ MUST USE 'ntohs'
 
-	//http_len=ip_total - (ip_l+po_l)
 	Http_len=Ip_total-(ip_l+po_l);
-	for(int i=0;i<Http_len;i++)putchar(Http->Http_text[i]);
 	
+	printf("Ip_total:%d\n",Ip_total);
+	printf("ip_l+po_l:%d\n",ip_l+po_l);
+	printf("ht_len:%d\n",Http_len);
+	if(Ip_total>Http_len){
+	for(int i=0;i<Http_len;i++)if(isascii(Http->Http_text[i]))putchar(Http->Http_text[i]);
+	}
+	else printf("How can it be longer than the total?\n");
+	//if(isprint(Http->Http_text[i]))
 	printf("\n********HTTP_END**********\n");
 }
 
